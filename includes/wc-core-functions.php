@@ -886,7 +886,7 @@ function wc_print_js() {
 		 * @since 2.6.0
 		 * @param string $js JavaScript code.
 		 */
-		echo apply_filters( 'woocommerce_queued_js', $js ); // WPCS: XSS ok.
+		echo apply_filters( 'woocommerce_queued_js', $js ); //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
 		unset( $wc_queued_js );
 	}
@@ -906,7 +906,8 @@ function wc_setcookie( $name, $value, $expire = 0, $secure = false, $httponly = 
 		setcookie( $name, $value, $expire, COOKIEPATH ? COOKIEPATH : '/', COOKIE_DOMAIN, $secure, apply_filters( 'woocommerce_cookie_httponly', $httponly, $name, $value, $expire, $secure ) );
 	} elseif ( Constants::is_true( 'WP_DEBUG' ) ) {
 		headers_sent( $file, $line );
-		trigger_error( "{$name} cookie cannot be set - headers already sent by {$file} on line {$line}", E_USER_NOTICE ); // @codingStandardsIgnoreLine
+		//phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_trigger_error, WordPress.Security.EscapeOutput.OutputNotEscaped
+		trigger_error( "{$name} cookie cannot be set - headers already sent by {$file} on line {$line}", E_USER_NOTICE );
 	}
 }
 
@@ -996,11 +997,13 @@ function flush_rewrite_rules_on_shop_page_save() {
 	}
 
 	// Check if page is edited.
-	if ( empty( $_GET['post'] ) || empty( $_GET['action'] ) || ( isset( $_GET['action'] ) && 'edit' !== $_GET['action'] ) ) { // WPCS: input var ok, CSRF ok.
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( empty( $_GET['post'] ) || empty( $_GET['action'] ) || ( isset( $_GET['action'] ) && 'edit' !== $_GET['action'] ) ) {
 		return;
 	}
 
-	$post_id      = intval( $_GET['post'] ); // WPCS: input var ok, CSRF ok.
+	//phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$post_id      = intval( $_GET['post'] );
 	$shop_page_id = wc_get_page_id( 'shop' );
 
 	if ( $shop_page_id === $post_id || in_array( $post_id, wc_get_page_children( $shop_page_id ), true ) ) {
@@ -1541,7 +1544,8 @@ function wc_get_shipping_method_count( $include_legacy = false, $enabled_only = 
  */
 function wc_set_time_limit( $limit = 0 ) {
 	if ( function_exists( 'set_time_limit' ) && false === strpos( ini_get( 'disable_functions' ), 'set_time_limit' ) && ! ini_get( 'safe_mode' ) ) { // phpcs:ignore PHPCompatibility.IniDirectives.RemovedIniDirectives.safe_modeDeprecatedRemoved
-		@set_time_limit( $limit ); // @codingStandardsIgnoreLine
+		//phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		@set_time_limit( $limit );
 	}
 }
 
@@ -1623,10 +1627,12 @@ function wc_uasort_comparison( $a, $b ) {
  * @return int
  */
 function wc_ascii_uasort_comparison( $a, $b ) {
+	//phpcs:disable WordPress.PHP.NoSilencedErrors.Discouraged
 	if ( function_exists( 'iconv' ) && defined( 'ICONV_IMPL' ) && @strcasecmp( ICONV_IMPL, 'unknown' ) !== 0 ) {
 		$a = @iconv( 'UTF-8', 'ASCII//TRANSLIT//IGNORE', $a );
 		$b = @iconv( 'UTF-8', 'ASCII//TRANSLIT//IGNORE', $b );
 	}
+	//phpcs:enable WordPress.PHP.NoSilencedErrors.Discouraged
 	return strcmp( $a, $b );
 }
 
@@ -1826,7 +1832,8 @@ function wc_print_r( $expression, $return = false ) {
 				return $res;
 			}
 
-			echo $res; // WPCS: XSS ok.
+			//phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo $res;
 			return true;
 		}
 	}
@@ -1995,7 +2002,8 @@ function wc_make_phone_clickable( $phone ) {
  * @return mixed Value sanitized by wc_clean.
  */
 function wc_get_post_data_by_key( $key, $default = '' ) {
-	return wc_clean( wp_unslash( wc_get_var( $_POST[ $key ], $default ) ) ); // @codingStandardsIgnoreLine
+	//phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification.Missing
+	return wc_clean( wp_unslash( wc_get_var( $_POST[ $key ], $default ) ) );
 }
 
 /**
@@ -2083,19 +2091,21 @@ add_filter( 'auto_update_plugin', 'wc_prevent_dangerous_auto_updates', 99, 2 );
 function wc_delete_expired_transients() {
 	global $wpdb;
 
-	$sql  = "DELETE a, b FROM $wpdb->options a, $wpdb->options b
+	$sql = "DELETE a, b FROM $wpdb->options a, $wpdb->options b
 		WHERE a.option_name LIKE %s
 		AND a.option_name NOT LIKE %s
 		AND b.option_name = CONCAT( '_transient_timeout_', SUBSTRING( a.option_name, 12 ) )
 		AND b.option_value < %d";
-	$rows = $wpdb->query( $wpdb->prepare( $sql, $wpdb->esc_like( '_transient_' ) . '%', $wpdb->esc_like( '_transient_timeout_' ) . '%', time() ) ); // WPCS: unprepared SQL ok.
+	//phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+	$rows = $wpdb->query( $wpdb->prepare( $sql, $wpdb->esc_like( '_transient_' ) . '%', $wpdb->esc_like( '_transient_timeout_' ) . '%', time() ) );
 
-	$sql   = "DELETE a, b FROM $wpdb->options a, $wpdb->options b
+	$sql = "DELETE a, b FROM $wpdb->options a, $wpdb->options b
 		WHERE a.option_name LIKE %s
 		AND a.option_name NOT LIKE %s
 		AND b.option_name = CONCAT( '_site_transient_timeout_', SUBSTRING( a.option_name, 17 ) )
 		AND b.option_value < %d";
-	$rows2 = $wpdb->query( $wpdb->prepare( $sql, $wpdb->esc_like( '_site_transient_' ) . '%', $wpdb->esc_like( '_site_transient_timeout_' ) . '%', time() ) ); // WPCS: unprepared SQL ok.
+	//phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+	$rows2 = $wpdb->query( $wpdb->prepare( $sql, $wpdb->esc_like( '_site_transient_' ) . '%', $wpdb->esc_like( '_site_transient_timeout_' ) . '%', time() ) );
 
 	return absint( $rows + $rows2 );
 }
@@ -2265,8 +2275,10 @@ function wc_get_server_database_version() {
 	}
 
 	if ( $wpdb->use_mysqli ) {
-		$server_info = mysqli_get_server_info( $wpdb->dbh ); // @codingStandardsIgnoreLine.
+		//phpcs:ignore WordPress.DB.RestrictedFunctions
+		$server_info = mysqli_get_server_info( $wpdb->dbh );
 	} else {
+		//phpcs:ignore WordPress.DB.RestrictedFunctions, PHPCompatibility.Extensions.RemovedExtensions
 		$server_info = mysql_get_server_info( $wpdb->dbh ); // @codingStandardsIgnoreLine.
 	}
 
@@ -2300,5 +2312,6 @@ function wc_load_cart() {
  * @return bool
  */
 function wc_is_running_from_async_action_scheduler() {
+	//phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	return isset( $_REQUEST['action'] ) && 'as_async_request_queue_runner' === $_REQUEST['action'];
 }
