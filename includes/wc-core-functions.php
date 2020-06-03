@@ -9,6 +9,7 @@
  */
 
 use Automattic\Jetpack\Constants;
+use Automattic\WooCommerce\Utils\ArrayUtils;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -741,27 +742,7 @@ function wc_get_theme_support( $prop = '', $default = null ) {
 	}
 
 	if ( $prop ) {
-		$prop_stack = explode( '::', $prop );
-		$prop_key   = array_shift( $prop_stack );
-
-		if ( isset( $theme_support[ $prop_key ] ) ) {
-			$value = $theme_support[ $prop_key ];
-
-			if ( count( $prop_stack ) ) {
-				foreach ( $prop_stack as $prop_key ) {
-					if ( is_array( $value ) && isset( $value[ $prop_key ] ) ) {
-						$value = $value[ $prop_key ];
-					} else {
-						$value = $default;
-						break;
-					}
-				}
-			}
-		} else {
-			$value = $default;
-		}
-
-		return $value;
+		return ArrayUtils::get_nested_value( $theme_support, $prop, $default );
 	}
 
 	return $theme_support;
