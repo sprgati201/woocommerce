@@ -160,9 +160,14 @@ final class CodeHacker {
 		if ( ! is_array( $paths ) || empty( $paths ) ) {
 			throw new \Exception( 'CodeHacker::initialize - $paths must be a non-empty array with the directories containing the files to be hacked.' );
 		}
+
 		self::$paths_with_files_to_hack = array_map(
 			function( $path ) {
-				return realpath( $path );
+				$realpath = realpath( $path );
+				if ( false === $realpath ) {
+					throw new \Exception( "CodeHacker::initialize: couldn't get the full path of file '$path' (does the file really exist?)" );
+				}
+				return $realpath;
 			},
 			$paths
 		);

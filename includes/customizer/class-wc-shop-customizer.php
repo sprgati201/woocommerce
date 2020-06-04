@@ -8,15 +8,27 @@
 
 defined( 'ABSPATH' ) || exit;
 
+use Automattic\WooCommerce\Theming\ThemeSupport;
+
 /**
  * WC_Shop_Customizer class.
  */
 class WC_Shop_Customizer {
 
 	/**
-	 * Constructor.
+	 * Holds the instance of ThemeSupport to use.
+	 *
+	 * @var ThemeSupport $theme_support The instance of ThemeSupport to use.
 	 */
-	public function __construct() {
+	private $theme_support;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param ThemeSupport $theme_support The instance of ThemeSupport to use, or null to use the default instance.
+	 */
+	public function __construct( $theme_support = null ) {
+		$this->theme_support = $theme_support ?? WC()->theme_support();
 		add_action( 'customize_register', array( $this, 'add_sections' ) );
 		add_action( 'customize_controls_print_styles', array( $this, 'add_styles' ) );
 		add_action( 'customize_controls_print_scripts', array( $this, 'add_scripts' ), 30 );
@@ -545,11 +557,11 @@ class WC_Shop_Customizer {
 			)
 		);
 
-		if ( ! wc_get_theme_support( 'single_image_width' ) ) {
+		if ( ! $this->theme_support->has_theme_support_option( 'single_image_width', false ) ) {
 			$wp_customize->add_setting(
 				'woocommerce_single_image_width',
 				array(
-					'default'              => 600,
+					'default'              => $this->theme_support->get_theme_support_option( 'single_image_width', 600 ),
 					'type'                 => 'option',
 					'capability'           => 'manage_woocommerce',
 					'sanitize_callback'    => 'absint',
@@ -573,11 +585,11 @@ class WC_Shop_Customizer {
 			);
 		}
 
-		if ( ! wc_get_theme_support( 'thumbnail_image_width' ) ) {
+		if ( ! $this->theme_support->has_theme_support_option( 'thumbnail_image_width', false ) ) {
 			$wp_customize->add_setting(
 				'woocommerce_thumbnail_image_width',
 				array(
-					'default'              => 300,
+					'default'              => $this->theme_support->get_theme_support_option( 'thumbnail_image_width', 300 ),
 					'type'                 => 'option',
 					'capability'           => 'manage_woocommerce',
 					'sanitize_callback'    => 'absint',
