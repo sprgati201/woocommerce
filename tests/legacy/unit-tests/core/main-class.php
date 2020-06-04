@@ -1,9 +1,14 @@
 <?php
+/**
+ * Tests for WooCommerce class.
+ *
+ * @package WooCommerce\Tests\Util
+ */
 
 use Automattic\Jetpack\Constants;
 
 /**
- * WooCommerce class.
+ * Tests for WooCommerce class.
  *
  * @package WooCommerce\Tests\Util
  */
@@ -32,7 +37,7 @@ class WC_Test_WooCommerce extends WC_Unit_Test_Case {
 	 * @since 2.2
 	 */
 	public function test_wc_instance() {
-		$this->assertClassHasStaticAttribute( '_instance', 'WooCommerce' );
+		$this->assertClassHasStaticAttribute( 'instance', 'WooCommerce' );
 	}
 
 	/**
