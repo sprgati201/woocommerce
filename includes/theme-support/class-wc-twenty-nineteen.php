@@ -37,8 +37,7 @@ class WC_Twenty_Nineteen {
 		add_theme_support( 'wc-product-gallery-zoom' );
 		add_theme_support( 'wc-product-gallery-lightbox' );
 		add_theme_support( 'wc-product-gallery-slider' );
-		add_theme_support(
-			'woocommerce',
+		WC()->theme_support()->add_theme_support_options(
 			array(
 				'thumbnail_image_width' => 300,
 				'single_image_width'    => 450,
@@ -48,7 +47,7 @@ class WC_Twenty_Nineteen {
 		// Tweak Twenty Nineteen features.
 		add_action( 'wp', array( __CLASS__, 'tweak_theme_features' ) );
 
-		// Color scheme CSS
+		// Color scheme CSS.
 		add_filter( 'twentynineteen_custom_colors_css', array( __CLASS__, 'custom_colors_css' ), 10, 3 );
 	}
 

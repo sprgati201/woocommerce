@@ -8,6 +8,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/../src/Theming/ThemeSupport.php';
+use Automattic\WooCommerce\Theming\ThemeSupport;
+
 /**
  * Main WooCommerce Class.
  *
@@ -155,6 +158,20 @@ final class WooCommerce {
 		$this->define_tables();
 		$this->includes();
 		$this->init_hooks();
+		$this->load_class_instances();
+	}
+
+	/**
+	 * Load class instances.
+	 */
+	private function load_class_instances() {
+		$this->product_factory                     = new WC_Product_Factory();
+		$this->order_factory                       = new WC_Order_Factory();
+		$this->countries                           = new WC_Countries();
+		$this->integrations                        = new WC_Integrations();
+		$this->structured_data                     = new WC_Structured_Data();
+		$this->deprecated_hook_handlers['actions'] = new WC_Deprecated_Action_Hooks();
+		$this->deprecated_hook_handlers['filters'] = new WC_Deprecated_Filter_Hooks();
 	}
 
 	/**
@@ -551,15 +568,6 @@ final class WooCommerce {
 		// Set up localisation.
 		$this->load_plugin_textdomain();
 
-		// Load class instances.
-		$this->product_factory                     = new WC_Product_Factory();
-		$this->order_factory                       = new WC_Order_Factory();
-		$this->countries                           = new WC_Countries();
-		$this->integrations                        = new WC_Integrations();
-		$this->structured_data                     = new WC_Structured_Data();
-		$this->deprecated_hook_handlers['actions'] = new WC_Deprecated_Action_Hooks();
-		$this->deprecated_hook_handlers['filters'] = new WC_Deprecated_Filter_Hooks();
-
 		// Classes/actions loaded for the frontend and for ajax requests.
 		if ( $this->is_request( 'frontend' ) ) {
 			wc_load_cart();
@@ -845,6 +853,15 @@ final class WooCommerce {
 	 */
 	public function mailer() {
 		return WC_Emails::instance();
+	}
+
+	/**
+	 * Theme support class.
+	 *
+	 * @return ThemeSupport
+	 */
+	public function theme_support() {
+		return ThemeSupport::instance();
 	}
 
 	/**

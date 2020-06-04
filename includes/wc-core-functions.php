@@ -9,7 +9,7 @@
  */
 
 use Automattic\Jetpack\Constants;
-use Automattic\WooCommerce\Utils\ArrayUtils;
+use Automattic\WooCommerce\Theming\ThemeSupport;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -732,20 +732,11 @@ function wc_mail( $to, $subject, $message, $headers = "Content-Type: text/html\r
  * @param  string $prop Name of prop (or key::subkey for arrays of props) if you want a specific value. Leave blank to get all props as an array.
  * @param  mixed  $default Optional value to return if the theme does not declare support for a prop.
  * @return mixed  Value of prop(s).
+ *
+ * @deprecated 4.3.0 Use WC()->theme_support()->get_woocommerce_theme_support instead.
  */
 function wc_get_theme_support( $prop = '', $default = null ) {
-	$theme_support = get_theme_support( 'woocommerce' );
-	$theme_support = is_array( $theme_support ) ? $theme_support[0] : false;
-
-	if ( ! $theme_support ) {
-		return $default;
-	}
-
-	if ( $prop ) {
-		return ArrayUtils::get_nested_value( $theme_support, $prop, $default );
-	}
-
-	return $theme_support;
+	return WC()->theme_support()->get_theme_support_option( $prop, $default );
 }
 
 /**

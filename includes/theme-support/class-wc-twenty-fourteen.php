@@ -30,8 +30,7 @@ class WC_Twenty_Fourteen {
 		add_theme_support( 'wc-product-gallery-zoom' );
 		add_theme_support( 'wc-product-gallery-lightbox' );
 		add_theme_support( 'wc-product-gallery-slider' );
-		add_theme_support(
-			'woocommerce',
+		WC()->theme_support()->add_theme_support_options(
 			array(
 				'thumbnail_image_width' => 150,
 				'single_image_width'    => 300,
