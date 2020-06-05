@@ -67,7 +67,7 @@ class ThemeSupport {
 	 * @return mixed The retrieved option or the default value.
 	 */
 	public function get_theme_support_option( $option_name = '', $default_value = null ) {
-		$theme_support_options = $this->get_all_woocommerce_theme_support_options();
+		$theme_support_options = $this->get_all_theme_support_options();
 
 		if ( ! $theme_support_options ) {
 			return $default_value;
@@ -93,7 +93,7 @@ class ThemeSupport {
 	 * @return bool True if the specified theme support option has been defined, false otherwise.
 	 */
 	public function has_theme_support_option( $option_name, $include_defaults = true ) {
-		$theme_support_options = $this->get_all_woocommerce_theme_support_options();
+		$theme_support_options = $this->get_all_theme_support_options();
 
 		if ( ! $theme_support_options ) {
 			return false;
@@ -116,7 +116,7 @@ class ThemeSupport {
 	 *
 	 * @return array An array with all the theme support options defined for the 'woocommerce' feature, or false if nothing has been defined for that feature.
 	 */
-	private function get_all_woocommerce_theme_support_options() {
+	private function get_all_theme_support_options() {
 		$theme_support = get_theme_support( 'woocommerce' );
 		return is_array( $theme_support ) ? $theme_support[0] : false;
 	}

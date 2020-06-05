@@ -269,7 +269,6 @@ final class WooCommerce {
 		}
 	}
 
-	//phpcs:disable Generic.Commenting.Todo.CommentFound, WordPress.Security.ValidatedSanitizedInput
 	/**
 	 * Returns true if the request is a non-legacy REST API request.
 	 *
@@ -284,12 +283,12 @@ final class WooCommerce {
 			return false;
 		}
 
-		$rest_prefix         = trailingslashit( rest_get_url_prefix() );
+		$rest_prefix = trailingslashit( rest_get_url_prefix() );
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput
 		$is_rest_api_request = ( false !== strpos( $_SERVER['REQUEST_URI'], $rest_prefix ) );
 
 		return apply_filters( 'woocommerce_is_rest_api_request', $is_rest_api_request );
 	}
-	//phpcs:enable Generic.Commenting.Todo.CommentFound, WordPress.Security.ValidatedSanitizedInput
 
 	/**
 	 * What type of request is this?
@@ -593,7 +592,6 @@ final class WooCommerce {
 		if ( function_exists( 'determine_locale' ) ) {
 			$locale = determine_locale();
 		} else {
-			// phpcs:ignore Generic.Commenting.Todo.TaskFound
 			// @todo Remove when start supporting WP 5.0 or later.
 			$locale = is_admin() ? get_user_locale() : get_locale();
 		}
