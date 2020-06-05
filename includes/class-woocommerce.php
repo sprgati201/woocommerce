@@ -860,7 +860,7 @@ final class WooCommerce {
 	 *
 	 * @return ThemeSupport
 	 */
-	public function theme_support() {
+	public static function theme_support() {
 		return ThemeSupport::instance();
 	}
 

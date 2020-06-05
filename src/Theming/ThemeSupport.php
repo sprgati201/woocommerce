@@ -11,7 +11,7 @@ use Automattic\WooCommerce\Utils\ArrayUtils;
 
 /**
  * Provides methods for theme support.
- * Get an instance via WC()->theme_support().
+ * Get an instance via WooCommerce::theme_support().
  *
  * @package Automattic\WooCommerce\Theming
  */

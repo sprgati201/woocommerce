@@ -733,10 +733,10 @@ function wc_mail( $to, $subject, $message, $headers = "Content-Type: text/html\r
  * @param  mixed  $default Optional value to return if the theme does not declare support for a prop.
  * @return mixed  Value of prop(s).
  *
- * @deprecated 4.3.0 Use WC()->theme_support()->get_woocommerce_theme_support instead.
+ * @deprecated 4.3.0 Use WooCommerce::theme_support()->get_woocommerce_theme_support instead.
  */
 function wc_get_theme_support( $prop = '', $default = null ) {
-	return WC()->theme_support()->get_theme_support_option( $prop, $default );
+	return WooCommerce::theme_support()->get_theme_support_option( $prop, $default );
 }
 
 /**

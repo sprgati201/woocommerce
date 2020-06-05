@@ -29,7 +29,7 @@ class WC_Twenty_Ten {
 		add_theme_support( 'wc-product-gallery-zoom' );
 		add_theme_support( 'wc-product-gallery-lightbox' );
 		add_theme_support( 'wc-product-gallery-slider' );
-		WC()->theme_support()->add_default_theme_support_options(
+		WooCommerce::theme_support()->add_default_theme_support_options(
 			array(
 				'thumbnail_image_width' => 200,
 				'single_image_width'    => 300,

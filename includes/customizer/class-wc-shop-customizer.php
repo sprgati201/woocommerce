@@ -28,7 +28,7 @@ class WC_Shop_Customizer {
 	 * @param ThemeSupport $theme_support The instance of ThemeSupport to use, or null to use the default instance.
 	 */
 	public function __construct( $theme_support = null ) {
-		$this->theme_support = $theme_support ?? WC()->theme_support();
+		$this->theme_support = $theme_support ?? WooCommerce::theme_support();
 		add_action( 'customize_register', array( $this, 'add_sections' ) );
 		add_action( 'customize_controls_print_styles', array( $this, 'add_styles' ) );
 		add_action( 'customize_controls_print_scripts', array( $this, 'add_scripts' ), 30 );

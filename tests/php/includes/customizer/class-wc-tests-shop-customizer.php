@@ -48,7 +48,7 @@ class WC_Tests_Shop_Customizer extends WC_Unit_Test_Case {
 		$customize_manager->method( 'add_setting' )->will( $this->returnCallback( $add_setting_callback ) );
 		$customize_manager->method( 'add_control' )->will( $this->returnCallback( $add_control_callback ) );
 
-		$theme_support      = WC()->theme_support();
+		$theme_support      = WooCommerce::theme_support();
 		$add_support_method = $add_explicit_theme_support ? 'add_theme_support_options' : 'add_default_theme_support_options';
 		$theme_support->$add_support_method( array( $option_name => 1234 ) );
 
