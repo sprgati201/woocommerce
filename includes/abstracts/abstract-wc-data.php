@@ -397,7 +397,7 @@ abstract class WC_Data {
 			$this->meta_data = array();
 		}
 		$meta_data = $this->data_store->filter_raw_data( $this, $raw_data );
-		$this->set_meta_data( $meta_data );
+		$this->set_from_raw_meta_data( $meta_data );
 	}
 
 	/**
@@ -562,20 +562,28 @@ abstract class WC_Data {
 		}
 
 		$raw_meta_data = $cache_loaded ? $cached_meta : $this->data_store->read_meta( $this );
+
 		if ( $raw_meta_data ) {
-			foreach ( $raw_meta_data as $meta ) {
-				$this->meta_data[] = new WC_Meta_Data(
-					array(
-						'id'    => (int) $meta->meta_id,
-						'key'   => $meta->meta_key,
-						'value' => maybe_unserialize( $meta->meta_value ),
-					)
-				);
-			}
+			$this->set_from_raw_meta_data( $raw_meta_data );
 
 			if ( ! $cache_loaded && ! empty( $this->cache_group ) ) {
 				wp_cache_set( $cache_key, $raw_meta_data, $this->cache_group );
 			}
+		}
+	}
+
+	protected function set_from_raw_meta_data( $raw_meta_data ) {
+		if ( ! is_array( $raw_meta_data ) ) {
+			return;
+		}
+		foreach ( $raw_meta_data as $meta ) {
+			$this->meta_data[] = new WC_Meta_Data(
+				array(
+					'id'    => (int) $meta->meta_id,
+					'key'   => $meta->meta_key,
+					'value' => maybe_unserialize( $meta->meta_value ),
+				)
+			);
 		}
 	}
 
