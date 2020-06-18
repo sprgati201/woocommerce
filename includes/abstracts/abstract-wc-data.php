@@ -392,6 +392,14 @@ abstract class WC_Data {
 		}
 	}
 
+	public function set_meta_data_from_raw_data( $raw_data ) {
+		if ( null === $this->meta_data ) {
+			$this->meta_data = array();
+		}
+		$meta_data = $this->data_store->filter_raw_data( $this, $raw_data );
+		$this->set_meta_data( $meta_data );
+	}
+
 	/**
 	 * Add meta data.
 	 *

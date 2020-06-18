@@ -88,6 +88,19 @@ abstract class Abstract_WC_Order_Data_Store_CPT extends WC_Data_Store_WP impleme
 		}
 	}
 
+	public static function fetch_raw_meta_for_posts( $post_ids ) {
+		global $wpdb;
+		$post_ids = esc_sql( $post_ids );
+		$post_ids_in = "'" . implode( $post_ids, "', '" ) . "'";
+		$raw_meta_data = $wpdb->get_results(
+				"SELECT post_id as object_id, meta_id, meta_key, meta_value
+				FROM {$wpdb->postmeta}
+				WHERE post_id IN ( $post_ids_in )
+				ORDER BY post_id"
+		); // phpcs:ignore
+		return $raw_meta_data;
+	}
+
 	/**
 	 * Method to read an order from the database.
 	 *
@@ -99,6 +112,55 @@ abstract class Abstract_WC_Order_Data_Store_CPT extends WC_Data_Store_WP impleme
 		$order->set_defaults();
 		$post_object = get_post( $order->get_id() );
 
+		$this->read_from_post( $order, $post_object );
+		$order->read_meta_data();
+		$order->set_object_read( true );
+
+		/**
+		 * In older versions, discounts may have been stored differently.
+		 * Update them now so if the object is saved, the correct values are
+		 * stored. @todo When meta is flattened, handle this during migration.
+		 */
+		if ( version_compare( $order->get_version( 'edit' ), '2.3.7', '<' ) && $order->get_prices_include_tax( 'edit' ) ) {
+			$order->set_discount_total( (float) get_post_meta( $order->get_id(), '_cart_discount', true ) - (float) get_post_meta( $order->get_id(), '_cart_discount_tax', true ) );
+		}
+	}
+
+	/**
+	 * @param WC_Order $order
+	 * @param \Automattic\WooCommerce\Models\PostsHydration $post_hydration
+	 */
+	public function read_from_hydration( $order, $post_hydration ) {
+		$post_object = $post_hydration->get_post( $order->get_id() );
+		$order->set_id( $post_object->ID );
+		$order->set_defaults();
+
+		$this->read_from_post( $order, $post_object );
+		if ( $post_hydration->has_key( 'raw_meta_data' ) ) {
+			$raw_meta_data = $post_hydration->get_raw_meta_data_for_object( $post_object->ID );
+			if ( empty( $raw_meta_data ) ) {
+				$order->read_meta_data();
+			} else {
+				$order->set_meta_data_from_raw_data( $raw_meta_data );
+			}
+		}
+
+		if ( $post_hydration->has_key( 'refunds' ) ) {
+			$refunds = $post_hydration->get_data_for_object( 'refunds', $post_object->ID ) ?? array();
+			$order->set_refunds( $refunds );
+		}
+
+		$order->set_object_read( true );
+
+	}
+
+	/**
+	 * @param WC_Data $order
+	 * @param WP_Post $post_object
+	 *
+	 * @throws Exception
+	 */
+	private function read_from_post( $order, $post_object ) {
 		if ( ! $order->get_id() || ! $post_object || ! in_array( $post_object->post_type, wc_get_order_types(), true ) ) {
 			throw new Exception( __( 'Invalid order.', 'woocommerce' ) );
 		}
@@ -113,18 +175,8 @@ abstract class Abstract_WC_Order_Data_Store_CPT extends WC_Data_Store_WP impleme
 		);
 
 		$this->read_order_data( $order, $post_object );
-		$order->read_meta_data();
-		$order->set_object_read( true );
-
-		/**
-		 * In older versions, discounts may have been stored differently.
-		 * Update them now so if the object is saved, the correct values are
-		 * stored. @todo When meta is flattened, handle this during migration.
-		 */
-		if ( version_compare( $order->get_version( 'edit' ), '2.3.7', '<' ) && $order->get_prices_include_tax( 'edit' ) ) {
-			$order->set_discount_total( (float) get_post_meta( $order->get_id(), '_cart_discount', true ) - (float) get_post_meta( $order->get_id(), '_cart_discount_tax', true ) );
-		}
 	}
+
 
 	/**
 	 * Method to update an order in the database.
@@ -274,17 +326,21 @@ abstract class Abstract_WC_Order_Data_Store_CPT extends WC_Data_Store_WP impleme
 	protected function read_order_data( &$order, $post_object ) {
 		$id = $order->get_id();
 
+		if ( ! ( $post_object instanceof WP_Post && $post_object->ID === $id ) ) {
+			$post_object = get_post( $id );
+		}
+
 		$order->set_props(
 			array(
-				'currency'           => get_post_meta( $id, '_order_currency', true ),
-				'discount_total'     => get_post_meta( $id, '_cart_discount', true ),
-				'discount_tax'       => get_post_meta( $id, '_cart_discount_tax', true ),
-				'shipping_total'     => get_post_meta( $id, '_order_shipping', true ),
-				'shipping_tax'       => get_post_meta( $id, '_order_shipping_tax', true ),
-				'cart_tax'           => get_post_meta( $id, '_order_tax', true ),
-				'total'              => get_post_meta( $id, '_order_total', true ),
-				'version'            => get_post_meta( $id, '_order_version', true ),
-				'prices_include_tax' => metadata_exists( 'post', $id, '_prices_include_tax' ) ? 'yes' === get_post_meta( $id, '_prices_include_tax', true ) : 'yes' === get_option( 'woocommerce_prices_include_tax' ),
+				'currency'           => $post_object->_order_currency,
+				'discount_total'     => $post_object->_cart_discount,
+				'discount_tax'       => $post_object->_cart_discount_tax,
+				'shipping_total'     => $post_object->_order_shipping,
+				'shipping_tax'       => $post_object->_order_shipping_tax,
+				'cart_tax'           => $post_object->_order_tax,
+				'total'              => $post_object->_order_total,
+				'version'            => $post_object->_order_version,
+				'prices_include_tax' => "" !== $post_object->_prices_include_tax ? 'yes' === $post_object->_prices_include_tax : 'yes' === get_option( 'woocommerce_prices_include_tax' ),
 			)
 		);
 
@@ -292,7 +348,7 @@ abstract class Abstract_WC_Order_Data_Store_CPT extends WC_Data_Store_WP impleme
 		foreach ( $order->get_extra_data_keys() as $key ) {
 			$function = 'set_' . $key;
 			if ( is_callable( array( $order, $function ) ) ) {
-				$order->{$function}( get_post_meta( $order->get_id(), '_' . $key, true ) );
+				$order->{$function}( $post_object->{'_' . $key} );
 			}
 		}
 	}

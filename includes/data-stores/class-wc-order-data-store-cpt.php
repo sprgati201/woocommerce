@@ -95,7 +95,7 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 	 */
 	protected function read_order_data( &$order, $post_object ) {
 		parent::read_order_data( $order, $post_object );
-		$id             = $order->get_id();
+ 		$id             = $order->get_id();
 		$date_completed = get_post_meta( $id, '_date_completed', true );
 		$date_paid      = get_post_meta( $id, '_date_paid', true );
 
@@ -715,13 +715,16 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 
 	/**
 	 * Get the order type based on Order ID.
-	 *
 	 * @since 3.0.0
-	 * @param int $order_id Order ID.
+	 * @param int|WP_Post $order Order | Order id.
+	 *
 	 * @return string
 	 */
-	public function get_order_type( $order_id ) {
-		return get_post_type( $order_id );
+	public function get_order_type( $order ) {
+		if ( $order instanceof WP_Post ) {
+			return $order->post_type;
+		}
+		return get_post_type( $order );
 	}
 
 	/**
@@ -848,7 +851,13 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 			$query = new WP_Query( $args );
 		}
 
-		$orders = ( isset( $query_vars['return'] ) && 'ids' === $query_vars['return'] ) ? $query->posts : array_filter( array_map( 'wc_get_order', $query->posts ) );
+		if ( isset( $query_vars['return'] ) && 'ids' === $query_vars['return'] ) {
+			$orders = $query->posts;
+		} else {
+			$order_ids = wp_list_pluck( $query->posts, 'ID' );
+			$orders = $this->compile_orders( $order_ids, $query_vars, $query );
+		}
+
 
 		if ( isset( $query_vars['paginate'] ) && $query_vars['paginate'] ) {
 			return (object) array(
@@ -856,6 +865,69 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 				'total'         => $query->found_posts,
 				'max_num_pages' => $query->max_num_pages,
 			);
+		}
+
+		return $orders;
+	}
+
+	public function compile_orders( $order_ids, $query_vars, $query ) {
+		global $wpdb;
+
+		if ( empty( $order_ids ) ) {
+			return array();
+		}
+
+		$hydration_object = new \Automattic\WooCommerce\Models\PostsHydration();
+
+		$raw_meta  = $this->fetch_raw_meta_for_posts( $order_ids );
+		if ( isset( $query_vars['type'] ) && 'shop_order' === $query_vars['type'] ) {
+			$refunds = wc_get_orders(
+				array(
+					'type'   => 'shop_order_refund',
+					'post_parent__in' => $order_ids,
+					'limit'  => - 1,
+				)
+			);
+			$hydration_object->set_refunds( $refunds );
+		}
+
+		$order_id_string = implode( ',', $order_ids );
+		$items = $wpdb->get_results(
+			"SELECT order_item_type, order_item_id, order_id, order_item_name FROM {$wpdb->prefix}woocommerce_order_items WHERE order_id in ( $order_id_string ) ORDER BY order_item_id;"
+		);
+
+		foreach ( $items as $item ) {
+			wp_cache_set( 'item-' . $item->order_item_id, $item, 'order-items' );
+		}
+
+		$hydration_object->set_collection( $items, 'order-items', 'order_id' );
+
+		foreach ( $hydration_object->get_data( 'order-items') as $order_id => $order_items ) {
+			wp_cache_set( 'order-items-' . $order_id, $order_items, 'orders' );
+		}
+
+		$hydration_object->set_raw_meta_data( $raw_meta, 'object_id' );
+
+		$order_item_ids = wp_list_pluck( $items, 'order_item_id' );
+		$order_item_ids_string = implode( ',', $order_item_ids );
+
+		$items_meta_data = $wpdb->get_results(
+			"SELECT order_item_id, meta_id, meta_key, meta_value
+				FROM {$wpdb->prefix}woocommerce_order_itemmeta
+				WHERE order_item_id in ( $order_item_ids_string )
+				ORDER BY meta_id"
+		);
+
+		$hydration_object->set_collection( $items_meta_data, 'order-item-meta-data', 'order_item_id' );
+
+		foreach ( $hydration_object->get_data( 'order-item-meta-data' ) as $order_item_id => $order_item_metas  ) {
+			wp_cache_set( $order_item_id, $order_item_metas, 'order_item_meta' );
+		}
+
+		foreach ( $query->posts as $post ) {
+			// Lets do some hydrations so that we don't have to fetch data from DB later.
+			$hydration_object->set_post( $post );
+			$orders[] = wc_get_order_from_hydration( $post, $hydration_object );
 		}
 
 		return $orders;

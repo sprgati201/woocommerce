@@ -80,7 +80,16 @@ function wc_get_order( $the_order = false ) {
 		wc_doing_it_wrong( __FUNCTION__, 'wc_get_order should not be called before post types are registered (woocommerce_after_register_post_type action)', '2.5' );
 		return false;
 	}
+	if ( $the_order instanceof WP_Post ) {
+		$hydration_object = new \Automattic\WooCommerce\Models\PostsHydration();
+		$hydration_object->set_post( $the_order );
+		return wc_get_order_from_hydration( $the_order, $hydration_object );
+	}
 	return WC()->order_factory->get_order( $the_order );
+}
+
+function wc_get_order_from_hydration( $the_order = false, $hydration = null ) {
+	return WC()->order_factory->get_order_from_hydration( $the_order, $hydration );
 }
 
 /**

@@ -15,6 +15,8 @@ defined( 'ABSPATH' ) || exit;
  */
 class WC_Order extends WC_Abstract_Order {
 
+	protected $refunds = null;
+
 	/**
 	 * Stores data about status changes so relevant hooks can be fired.
 	 *
@@ -1783,6 +1785,10 @@ class WC_Order extends WC_Abstract_Order {
 	|--------------------------------------------------------------------------
 	*/
 
+	public function set_refunds( $refunds ) {
+		$this->refunds = $refunds;
+	}
+
 	/**
 	 * Get order refunds.
 	 *
@@ -1790,6 +1796,9 @@ class WC_Order extends WC_Abstract_Order {
 	 * @return array of WC_Order_Refund objects
 	 */
 	public function get_refunds() {
+		if ( null !== $this->refunds ) {
+			return $this->refunds;
+		}
 		$cache_key   = WC_Cache_Helper::get_cache_prefix( 'orders' ) . 'refunds' . $this->get_id();
 		$cached_data = wp_cache_get( $cache_key, $this->cache_group );
 
