@@ -111,7 +111,6 @@ abstract class Abstract_WC_Order_Data_Store_CPT extends WC_Data_Store_WP impleme
 	public function read( &$order ) {
 		$order->set_defaults();
 		$post_object = get_post( $order->get_id() );
-
 		$this->read_from_post( $order, $post_object );
 		$order->read_meta_data();
 		$order->set_object_read( true );
@@ -145,6 +144,10 @@ abstract class Abstract_WC_Order_Data_Store_CPT extends WC_Data_Store_WP impleme
 			}
 		}
 
+		if ( $post_hydration->has_key( 'order-items' ) ) {
+			$this->read_items_from_hydration( $order, $post_hydration );
+		}
+
 		if ( $post_hydration->has_key( 'refunds' ) ) {
 			$refunds = $post_hydration->get_data_for_object( 'refunds', $post_object->ID ) ?? array();
 			$order->set_refunds( $refunds );
@@ -152,6 +155,14 @@ abstract class Abstract_WC_Order_Data_Store_CPT extends WC_Data_Store_WP impleme
 
 		$order->set_object_read( true );
 
+		/**
+		 * In older versions, discounts may have been stored differently.
+		 * Update them now so if the object is saved, the correct values are
+		 * stored. @todo When meta is flattened, handle this during migration.
+		 */
+		if ( version_compare( $order->get_version( 'edit' ), '2.3.7', '<' ) && $order->get_prices_include_tax( 'edit' ) ) {
+			$order->set_discount_total( (float) get_post_meta( $order->get_id(), '_cart_discount', true ) - (float) get_post_meta( $order->get_id(), '_cart_discount_tax', true ) );
+		}
 	}
 
 	/**
@@ -403,6 +414,28 @@ abstract class Abstract_WC_Order_Data_Store_CPT extends WC_Data_Store_WP impleme
 		clean_post_cache( $order->get_id() );
 		wc_delete_shop_order_transients( $order );
 		wp_cache_delete( 'order-items-' . $order->get_id(), 'orders' );
+	}
+
+	/**
+	 * @param \Automattic\WooCommerce\Models\PostsHydration $post_hydration
+	 */
+	public function read_items_from_hydration( $order, $post_hydration ) {
+		$items = $post_hydration->get_data_for_object( 'order-items', $order->get_id() );
+
+		if( ! is_array( $items ) ) {
+			return;
+		}
+
+		$order_items = array();
+		foreach ( $items as $order_item ) {
+			$class_name = WC_Order_Factory::get_order_item_class( $order_item );
+			if ( $post_hydration->has_key( 'order-item-meta-data' ) ) {
+				$order_item->metadata = $post_hydration->get_data_for_object( 'order-item-meta-data', $order_item->order_item_id );
+			}
+			if ( $class_name && class_exists( $class_name ) ) {
+				$order_items[] = new $class_name( $order_item );
+			}
+		}
 	}
 
 	/**

@@ -527,6 +527,9 @@ abstract class WC_Data {
 		}
 	}
 
+	public function get_meta_cache_key() {
+		return WC_Cache_Helper::get_cache_prefix( $this->cache_group ) . WC_Cache_Helper::get_cache_prefix( 'object_' . $this->get_id() ) . 'object_meta_' . $this->get_id();
+	}
 	/**
 	 * Read Meta Data from the database. Ignore any internal properties.
 	 * Uses it's own caches because get_metadata does not provide meta_ids.
@@ -548,7 +551,7 @@ abstract class WC_Data {
 
 		if ( ! empty( $this->cache_group ) ) {
 			// Prefix by group allows invalidation by group until https://core.trac.wordpress.org/ticket/4476 is implemented.
-			$cache_key = WC_Cache_Helper::get_cache_prefix( $this->cache_group ) . WC_Cache_Helper::get_cache_prefix( 'object_' . $this->get_id() ) . 'object_meta_' . $this->get_id();
+			$cache_key = $this->get_meta_cache_key();
 		}
 
 		if ( ! $force_read ) {

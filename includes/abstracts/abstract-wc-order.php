@@ -771,6 +771,10 @@ abstract class WC_Abstract_Order extends WC_Abstract_Legacy_Order {
 		return apply_filters( 'woocommerce_order_get_items', $items, $this, $types );
 	}
 
+	public function set_order_items( $order_items ) {
+		echo $order_items;
+	}
+
 	/**
 	 * Return array of values for calculations.
 	 *

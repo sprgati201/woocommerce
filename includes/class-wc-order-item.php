@@ -68,6 +68,11 @@ class WC_Order_Item extends WC_Data implements ArrayAccess {
 			$this->set_object_read( true );
 		}
 
+		if ( isset( $item->meta_data ) && is_object( $item->meta_data )) {
+			$meta_cache_key = $this->get_meta_cache_key();
+			wp_cache_set( $meta_cache_key, $item->meta_data, $this->cache_group );
+		}
+
 		$type             = 'line_item' === $this->get_type() ? 'product' : $this->get_type();
 		$this->data_store = WC_Data_Store::load( 'order-item-' . $type );
 		if ( $this->get_id() > 0 ) {
