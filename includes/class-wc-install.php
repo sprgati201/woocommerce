@@ -348,7 +348,7 @@ class WC_Install {
 	 * @since 4.3.0
 	 */
 	private static function maybe_enable_homescreen() {
-		if ( self::is_new_install() && ! get_option( 'woocommerce_homescreen_enabled' ) ) {
+		if ( is_null( get_option( 'woocommerce_version', null ) ) && ! get_option( 'woocommerce_homescreen_enabled' ) ) {
 			add_option( 'woocommerce_homescreen_enabled', 'yes' );
 		}
 	}
