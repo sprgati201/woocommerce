@@ -28,8 +28,12 @@ class WC_Order_Factory {
 			return false;
 		}
 
-		$order_type      = WC_Data_Store::load( 'order' )->get_order_type( $order );
+		$order_type      = WC_Data_Store::load( 'order' )->get_order_type( $order_id );
 		$classname = self::get_class_name_for_order( $order_id, $order_type );
+
+		if ( ! class_exists( $classname ) ) {
+			return false;
+		}
 
 		try {
 			return new $classname( $order_id );

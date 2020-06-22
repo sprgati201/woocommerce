@@ -909,18 +909,23 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 		$hydration_object->set_raw_meta_data( $raw_meta, 'object_id' );
 
 		$order_item_ids = wp_list_pluck( $items, 'order_item_id' );
-		$order_item_ids_string = implode( ',', $order_item_ids );
+		if ( ! empty( $order_item_ids ) ) {
+			$order_item_ids_string = implode( ',', $order_item_ids );
 
-		$items_meta_data = $wpdb->get_results(
-			"SELECT order_item_id, meta_id, meta_key, meta_value
+			$items_meta_data = $wpdb->get_results(
+				"SELECT order_item_id, meta_id, meta_key, meta_value
 				FROM {$wpdb->prefix}woocommerce_order_itemmeta
 				WHERE order_item_id in ( $order_item_ids_string )
 				ORDER BY meta_id"
-		);
+			);
 
-		$hydration_object->set_collection( $items_meta_data, 'order-item-meta-data', 'order_item_id' );
+			$hydration_object->set_collection( $items_meta_data, 'order-item-meta-data', 'order_item_id' );
 
-		update_meta_cache( 'order_item', $order_item_ids );
+			update_meta_cache( 'order_item', $order_item_ids );
+		} else {
+			$hydration_object->set_collection( array(), 'order-item-meta-data', 'order_item_id' );
+		}
+
 
 		foreach ( $query->posts as $post ) {
 			// Lets do some hydrations so that we don't have to fetch data from DB later.

@@ -135,7 +135,7 @@ abstract class Abstract_WC_Order_Data_Store_CPT extends WC_Data_Store_WP impleme
 		$order->set_defaults();
 
 		$this->read_from_post( $order, $post_object );
-		if ( $post_hydration->has_key( 'raw_meta_data' ) ) {
+		if ( $post_hydration->has_key( 'raw_meta_data', $post_object->ID ) ) {
 			$raw_meta_data = $post_hydration->get_raw_meta_data_for_object( $post_object->ID );
 			if ( empty( $raw_meta_data ) ) {
 				$order->read_meta_data();
@@ -144,11 +144,11 @@ abstract class Abstract_WC_Order_Data_Store_CPT extends WC_Data_Store_WP impleme
 			}
 		}
 
-		if ( $post_hydration->has_key( 'order-items' ) ) {
+		if ( $post_hydration->has_key( 'order-items', $post_object->ID ) ) {
 			$this->read_items_from_hydration( $order, $post_hydration );
 		}
 
-		if ( $post_hydration->has_key( 'refunds' ) ) {
+		if ( $post_hydration->has_key( 'refunds', $post_object->ID ) ) {
 			$refunds = $post_hydration->get_data_for_object( 'refunds', $post_object->ID ) ?? array();
 			$order->set_refunds( $refunds );
 		}
@@ -429,7 +429,7 @@ abstract class Abstract_WC_Order_Data_Store_CPT extends WC_Data_Store_WP impleme
 		$order_items = array();
 		foreach ( $items as $order_item ) {
 			$class_name = WC_Order_Factory::get_order_item_class( $order_item );
-			if ( $post_hydration->has_key( 'order-item-meta-data' ) ) {
+			if ( $post_hydration->has_key( 'order-item-meta-data', $order_item->order_item_id ) ) {
 				$order_item->metadata = $post_hydration->get_data_for_object( 'order-item-meta-data', $order_item->order_item_id );
 			}
 			if ( $class_name && class_exists( $class_name ) ) {

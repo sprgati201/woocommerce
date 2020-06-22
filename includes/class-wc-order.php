@@ -1786,6 +1786,8 @@ class WC_Order extends WC_Abstract_Order {
 	*/
 
 	public function set_refunds( $refunds ) {
+		$cache_key = WC_Cache_Helper::get_cache_prefix( 'orders' ) . 'refunds' . $this->get_id();
+		wp_cache_set( $cache_key, $refunds, $this->cache_group );
 		$this->refunds = $refunds;
 	}
 
@@ -1796,9 +1798,6 @@ class WC_Order extends WC_Abstract_Order {
 	 * @return array of WC_Order_Refund objects
 	 */
 	public function get_refunds() {
-		if ( null !== $this->refunds ) {
-			return $this->refunds;
-		}
 		$cache_key   = WC_Cache_Helper::get_cache_prefix( 'orders' ) . 'refunds' . $this->get_id();
 		$cached_data = wp_cache_get( $cache_key, $this->cache_group );
 
