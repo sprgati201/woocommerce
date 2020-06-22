@@ -920,9 +920,7 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 
 		$hydration_object->set_collection( $items_meta_data, 'order-item-meta-data', 'order_item_id' );
 
-		foreach ( $hydration_object->get_data( 'order-item-meta-data' ) as $order_item_id => $order_item_metas  ) {
-			wp_cache_set( $order_item_id, $order_item_metas, 'order_item_meta' );
-		}
+		update_meta_cache( 'order_item', $order_item_ids );
 
 		foreach ( $query->posts as $post ) {
 			// Lets do some hydrations so that we don't have to fetch data from DB later.
