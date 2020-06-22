@@ -36,7 +36,10 @@ class Hydration {
 		return $this->hydration_data[ $key ][ $object_id ];
 	}
 
-	public function has_key( $key, $object_id ) {
+	public function has_key( $key, $object_id = null ) {
+		if ( null === $object_id ) {
+			return  key_exists( $key, $this->hydration_data );
+		}
 		return key_exists( $key, $this->hydration_data ) && isset( $this->hydration_data[ $key ][ $object_id ] );
 	}
 

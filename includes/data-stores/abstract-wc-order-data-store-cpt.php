@@ -148,7 +148,7 @@ abstract class Abstract_WC_Order_Data_Store_CPT extends WC_Data_Store_WP impleme
 			$this->read_items_from_hydration( $order, $post_hydration );
 		}
 
-		if ( $post_hydration->has_key( 'refunds', $post_object->ID ) ) {
+		if ( $post_hydration->has_key( 'refunds' ) ) {
 			$refunds = $post_hydration->get_data_for_object( 'refunds', $post_object->ID ) ?? array();
 			$order->set_refunds( $refunds );
 		}
